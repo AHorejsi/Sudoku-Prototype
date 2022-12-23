@@ -1,14 +1,17 @@
 from __future__ import annotations
 from typing import List, NoReturn, Optional
+from BitVector import BitVector
 from sudoku.StateError import StateError
 from sudoku.Cell import _Cell
 from sudoku.SudokuInfo import SudokuInfo
 
 class _RegularSafety:
     def __init__(self, length: int):
-        self.__rowSafety: List[int] = [~(~0 << length)] * length
-        self.__colSafety: List[int] = [~(~0 << length)] * length
-        self.__boxSafety: List[int] = [~(~0 << length)] * length
+        bits = ~(~0 << length)
+
+        self.__rowSafety: List[BitVector] = [BitVector(intVal=bits, size=length)] * length
+        self.__colSafety: List[BitVector] = [BitVector(intVal=bits, size=length)] * length
+        self.__boxSafety: List[BitVector] = [BitVector(intVal=bits, size=length)] * length
 
     def safe(self, rowIndex: int, colIndex: int, boxIndex: int, valueIndex: int) -> bool:
         mask = 1 << valueIndex
@@ -33,15 +36,18 @@ class _RegularSafety:
         self.__colSafety[colIndex] &= mask
         self.__boxSafety[boxIndex] &= mask
 
-    def weight(self, rowIndex: int, colIndex: int, boxIndex: int, valueIndex: int) -> int:
-        pass
+    def weight(self, rowIndex: int, colIndex: int, boxIndex: int) -> (int, int, int):
+        rowWeight = self.__rowSafety[rowIndex].count_bits()
+        colWeight = self.__colSafety[colIndex].count_bits()
+        boxWeight = self.__boxSafety[boxIndex].count_bits()
+
+        return (rowWeight, colWeight, boxWeight)
 
 class RegularSudoku:
     def __init__(self, info: SudokuInfo, table: List[_Cell], safety: _RegularSafety):
         self.__info: SudokuInfo = info
         self.__table: List[_Cell] = table
         self.__safety: _RegularSafety = safety
-        self.__filledCount: int = 0
         self.__finalized: bool = False
 
     @property
@@ -124,13 +130,10 @@ class RegularSudoku:
 
         self.__safety.set_safe(rowIndex, colIndex, boxIndex, valueIndex)
 
-    def _weight(self, rowIndex: int, colIndex: int) -> int:
-        value = self.get(rowIndex, colIndex)
-
-        valueIndex = self.__order(value)
+    def _weight(self, rowIndex: int, colIndex: int) -> (int, int, int):
         boxIndex = self.__box_index(rowIndex, colIndex)
 
-        return self.__safety.weight(rowIndex, colIndex, boxIndex, valueIndex)
+        return self.__safety.weight(rowIndex, colIndex, boxIndex)
 
     def get(self, rowIndex: int, colIndex: int) -> Optional[str]:
         if rowIndex < 0 or rowIndex >= self.length or colIndex < 0 or colIndex >= self.length:
@@ -145,14 +148,9 @@ class RegularSudoku:
             raise ValueError("Invalid character")
 
         actualIndex = self.__actual_index(rowIndex, colIndex)
-        current = self.__table[actualIndex].value
 
-        if current != value:
+        if self.__table[actualIndex].value != value:
             self.__set_safe(rowIndex, colIndex)
-
-            if current is None:
-                self.__filledCount += 1
-
             self.__table[actualIndex].value = value
             self.__set_unsafe(rowIndex, colIndex, value)
 
@@ -165,7 +163,6 @@ class RegularSudoku:
         if self.__table[actualIndex] is not None:
             self.__table[actualIndex].value = None
             self.__set_safe(rowIndex, colIndex)
-            self.__filledCount -= 1
 
     def is_editable(self, rowIndex: int, colIndex: int) -> bool:
         if rowIndex < 0 or rowIndex >= self.length or colIndex < 0 or colIndex >= self.length:

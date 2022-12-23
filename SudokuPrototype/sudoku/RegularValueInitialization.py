@@ -14,7 +14,7 @@ def __next(rowIndex: int, colIndex: int, puzzle: RegularSudoku) -> (int, int):
 def __value_initialize_helper2(puzzle: RegularSudoku, legalValues: List[str], rowIndex: int, colIndex: int) -> bool:
     (rowIndex, colIndex) = __next(rowIndex, colIndex, puzzle)
 
-    return puzzle.length == rowIndex and __value_initialize_helper1(puzzle, legalValues, rowIndex, colIndex)
+    return puzzle.length == rowIndex or __value_initialize_helper1(puzzle, legalValues, rowIndex, colIndex)
 
 def __value_initialize_helper1(puzzle: RegularSudoku, legalValues: List[str], rowIndex: int, colIndex: int) -> bool:
     shuffle(legalValues)

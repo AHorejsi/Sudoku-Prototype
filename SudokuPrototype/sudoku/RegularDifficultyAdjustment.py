@@ -1,34 +1,21 @@
+from random import randint
 from typing import NoReturn
 from sudoku.RegularSudoku import RegularSudoku
 from sudoku.RegularSolver import _has_unique_solution
 
-def __next_snake(rowIndex: int, colIndex: int, puzzle: RegularSudoku) -> (int, int):
-    if 0 == rowIndex % 2:
-        colIndex += 1
+def __decide_amount_of_givens(puzzle: RegularSudoku) -> int:
+    total = puzzle.length * puzzle.length
+    upperBound = puzzle.upper_bound_of_givens
+    lowerBound = puzzle.lower_bound_of_givens
 
-        if colIndex == puzzle.length:
-            rowIndex += 1
-            colIndex = 0
-    else:
-        colIndex -= 1
+    percent = randint(lowerBound, upperBound)
+    amount = round(total * (percent / 100))
 
-        if -1 == colIndex:
-            rowIndex += 1
-            colIndex = puzzle.length - 1
+    return amount
 
-    return (rowIndex, colIndex)
-
-def __adjust_for_difficulty_helper1(puzzle: RegularSudoku, rowIndex: int, colIndex: int) -> NoReturn:
-    value = puzzle.get(rowIndex, colIndex)
-    puzzle.delete(rowIndex, colIndex)
-
-    (rowIndex, colIndex) = __next_snake(rowIndex, colIndex, puzzle)
-
-    if _has_unique_solution(puzzle):
-        __adjust_for_difficulty_helper1(puzzle, rowIndex, colIndex)
-    else:
-        puzzle.set(rowIndex, colIndex, value)
-        __adjust_for_difficulty_helper1(puzzle, rowIndex, colIndex)
+def __decide_lower_bound_on_units(puzzle: RegularSudoku) -> int:
+    return round(puzzle.length * (puzzle.lower_bound_of_givens_per_unit / 100))
 
 def _adjust_for_difficulty(puzzle: RegularSudoku) -> NoReturn:
-    __adjust_for_difficulty_helper1(puzzle, 0, 0)
+    amountOfGivens = __decide_amount_of_givens(puzzle)
+    lowerBoundOnUnits = __decide_lower_bound_on_units(puzzle)

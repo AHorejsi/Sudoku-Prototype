@@ -136,39 +136,44 @@ class RegularSudoku:
         return self.__safety.weight(rowIndex, colIndex, boxIndex)
 
     def get(self, rowIndex: int, colIndex: int) -> Optional[str]:
-        if rowIndex < 0 or rowIndex >= self.length or colIndex < 0 or colIndex >= self.length:
-            raise IndexError("Indices out of bounds")
+        self.__check_bounds(rowIndex, colIndex)
 
         return self.__table[self.__actual_index(rowIndex, colIndex)].value
 
     def set(self, rowIndex: int, colIndex: int, value: str) -> NoReturn:
-        if rowIndex < 0 or rowIndex >= self.length or colIndex < 0 or colIndex >= self.length:
-            raise IndexError("Indices out of bounds")
+        self.__check_bounds(rowIndex, colIndex)
         if not self.is_legal(value):
             raise ValueError("Invalid character")
 
         actualIndex = self.__actual_index(rowIndex, colIndex)
+        current = self.__table[actualIndex].value
 
-        if self.__table[actualIndex].value != value:
-            self.__set_safe(rowIndex, colIndex)
+        if current != value:
+            if current is not None:
+                self.__set_safe(rowIndex, colIndex)
+
             self.__table[actualIndex].value = value
             self.__set_unsafe(rowIndex, colIndex, value)
 
     def delete(self, rowIndex: int, colIndex: int) -> NoReturn:
-        if rowIndex < 0 or rowIndex >= self.length or colIndex < 0 or colIndex >= self.length:
-            raise IndexError("Indices out of bounds")
+        self.__check_bounds(rowIndex, colIndex)
 
         actualIndex = self.__actual_index(rowIndex, colIndex)
 
-        if self.__table[actualIndex] is not None:
+        if self.__table[actualIndex].value is not None:
             self.__table[actualIndex].value = None
             self.__set_safe(rowIndex, colIndex)
 
     def is_editable(self, rowIndex: int, colIndex: int) -> bool:
-        if rowIndex < 0 or rowIndex >= self.length or colIndex < 0 or colIndex >= self.length:
-            raise IndexError("Indices out of bounds")
+        self.__check_bounds(rowIndex, colIndex)
 
         return self.__table[self.__actual_index(rowIndex, colIndex)].editable
+
+    def __check_bounds(self, rowIndex: int, colIndex: int) -> NoReturn:
+        length = self.length
+
+        if rowIndex < 0 or rowIndex >= length or colIndex < 0 or colIndex >= length:
+            raise IndexError("Indices out of bounds")
 
     def __actual_index(self, rowIndex: int, colIndex: int) -> int:
         return rowIndex * self.length + colIndex
@@ -190,15 +195,16 @@ class RegularSudoku:
 
         self.__finalized = True
 
+    def solved(self) -> bool:
+        # TODO
+        pass
+
     def __repr__(self) -> str:
         length = self.length
         result = f"{self.difficulty}\n"
 
-        for (count, cell) in enumerate(self.__table):
-            if cell.value is None:
-                result += "* "
-            else:
-                result += cell.value + " "
+        for (count, cell) in enumerate(self.__table, 1):
+            result += "*" if cell.value is None else cell.value
 
             if 0 == count % length:
                 result += "\n"

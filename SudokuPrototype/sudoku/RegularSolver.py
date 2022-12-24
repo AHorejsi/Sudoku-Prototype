@@ -72,7 +72,7 @@ def __make_matrix(puzzle: RegularSudoku) -> List[List[bool]]:
 
     return matrix
 
-def __fill(values: list, fillValue: Any) -> NoReturn:
+def __fill(values: List[Any], fillValue: Any) -> NoReturn:
     for index in range(len(values)):
         values[index] = fillValue
 

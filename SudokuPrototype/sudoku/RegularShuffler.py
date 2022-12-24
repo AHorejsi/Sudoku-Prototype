@@ -12,6 +12,9 @@ def __horizontal_flip(puzzle: RegularSudoku) -> NoReturn:
             puzzle.set(row, i, puzzle.get(row, j))
             puzzle.set(row, j, temp)
 
+        i += 1
+        j -= 1
+
 def __vertical_flip(puzzle: RegularSudoku) -> NoReturn:
     i = 0
     j = puzzle.length - 1
@@ -21,6 +24,9 @@ def __vertical_flip(puzzle: RegularSudoku) -> NoReturn:
             temp = puzzle.get(i, col)
             puzzle.set(i, col, puzzle.get(j, col))
             puzzle.set(j, col, temp)
+
+        i += 1
+        j -= 1
 
 def __flip(puzzle: RegularSudoku) -> NoReturn:
     if 0 == randint(0, 2):

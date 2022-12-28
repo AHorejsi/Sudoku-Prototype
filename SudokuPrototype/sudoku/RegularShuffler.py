@@ -34,9 +34,9 @@ def __flip(puzzle: RegularSudoku) -> NoReturn:
     if 0 == randint(0, 2):
         __vertical_flip(puzzle)
 
-def __flip_box_by_row(puzzle: RegularSudoku, boxRows: int) -> NoReturn:
-    row1 = randint(0, boxRows)
-    row2 = randint(0, boxRows)
+def __flip_box_by_row(puzzle: RegularSudoku, rowBoxes: int) -> NoReturn:
+    row1 = randint(0, rowBoxes)
+    row2 = randint(0, rowBoxes)
 
     if row1 != row2:
         distance = puzzle.box_rows * (max(row1, row2) - min(row1, row2))
@@ -47,9 +47,9 @@ def __flip_box_by_row(puzzle: RegularSudoku, boxRows: int) -> NoReturn:
                 puzzle.set(i, j, puzzle.get(i + distance, j))
                 puzzle.set(i + distance, j, temp)
 
-def __flip_box_by_col(puzzle: RegularSudoku, boxCols: int) -> NoReturn:
-    col1 = randint(0, boxCols)
-    col2 = randint(0, boxCols)
+def __flip_box_by_col(puzzle: RegularSudoku, colBoxes: int) -> NoReturn:
+    col1 = randint(0, colBoxes)
+    col2 = randint(0, colBoxes)
 
     if col1 != col2:
         distance = puzzle.box_rows * abs(col1 - col2)
@@ -61,13 +61,13 @@ def __flip_box_by_col(puzzle: RegularSudoku, boxCols: int) -> NoReturn:
                 puzzle.set(i, j + distance, temp)
 
 def __flip_box(puzzle: RegularSudoku) -> NoReturn:
-    boxRows = puzzle.length // puzzle.box_rows
-    boxCols = puzzle.length // puzzle.box_cols
+    rowBoxes = puzzle.row_boxes
+    colBoxes = puzzle.col_boxes
 
-    for _ in range(boxRows):
-        __flip_box_by_row(puzzle, boxRows)
-    for _ in range(boxCols):
-        __flip_box_by_col(puzzle, boxCols)
+    for _ in range(rowBoxes):
+        __flip_box_by_row(puzzle, rowBoxes)
+    for _ in range(colBoxes):
+        __flip_box_by_col(puzzle, colBoxes)
 
 def __swap_box_dimensions(puzzle: RegularSudoku) -> NoReturn:
     dimensionInfo = puzzle._info.dimensions.value
@@ -175,21 +175,14 @@ def __assign_swaps(puzzle: RegularSudoku, legalValues: List[str]) -> Dict[str, s
 
 def __swap(puzzle: RegularSudoku, legalValues: List[str]) -> NoReturn:
     swapper = __assign_swaps(puzzle, legalValues)
+    length = puzzle.length
 
-    for rowIndex in range(puzzle.length):
-        for colIndex in range(puzzle.length):
+    for rowIndex in range(length):
+        for colIndex in range(length):
             value = puzzle.get(rowIndex, colIndex)
 
             if value is not None:
                 puzzle.set(rowIndex, colIndex, swapper[value])
-
-def __transpose(puzzle: RegularSudoku) -> NoReturn:
-    if 0 == randint(0, 2):
-        for colIndex in range(puzzle.length):
-            for rowIndex in range(puzzle.length - colIndex):
-                temp = puzzle.get(rowIndex, colIndex)
-                puzzle.set(rowIndex, colIndex, puzzle.get(colIndex, rowIndex))
-                puzzle.set(colIndex, rowIndex, temp)
 
 def _shuffle_board(puzzle: RegularSudoku, legalValues: List[str]) -> NoReturn:
     __flip(puzzle)
@@ -197,4 +190,3 @@ def _shuffle_board(puzzle: RegularSudoku, legalValues: List[str]) -> NoReturn:
     __inner(puzzle)
     __rotate(puzzle)
     __swap(puzzle, legalValues)
-    __transpose(puzzle)

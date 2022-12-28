@@ -48,7 +48,6 @@ class RegularSudoku:
         self.__info: SudokuInfo = info
         self.__table: List[_Cell] = table
         self.__safety: _RegularSafety = safety
-        self.__finalized: bool = False
 
     @property
     def _info(self) -> SudokuInfo:
@@ -65,6 +64,14 @@ class RegularSudoku:
     @property
     def box_cols(self) -> int:
         return self.__info.dimensions.value["boxCols"]
+
+    @property
+    def row_boxes(self) -> int:
+        return self.length // self.box_cols
+
+    @property
+    def col_boxes(self) -> int:
+        return self.length // self.box_rows
 
     @property
     def legal(self) -> str:
@@ -135,39 +142,10 @@ class RegularSudoku:
 
         return self.__safety.weight(rowIndex, colIndex, boxIndex)
 
-    def get(self, rowIndex: int, colIndex: int) -> Optional[str]:
+    def __get_cell(self, rowIndex: int, colIndex: int) -> _Cell:
         self.__check_bounds(rowIndex, colIndex)
 
-        return self.__table[self.__actual_index(rowIndex, colIndex)].value
-
-    def set(self, rowIndex: int, colIndex: int, value: str) -> NoReturn:
-        self.__check_bounds(rowIndex, colIndex)
-        if not self.is_legal(value):
-            raise ValueError("Invalid character")
-
-        actualIndex = self.__actual_index(rowIndex, colIndex)
-        current = self.__table[actualIndex].value
-
-        if current != value:
-            if current is not None:
-                self.__set_safe(rowIndex, colIndex)
-
-            self.__table[actualIndex].value = value
-            self.__set_unsafe(rowIndex, colIndex, value)
-
-    def delete(self, rowIndex: int, colIndex: int) -> NoReturn:
-        self.__check_bounds(rowIndex, colIndex)
-
-        actualIndex = self.__actual_index(rowIndex, colIndex)
-
-        if self.__table[actualIndex].value is not None:
-            self.__table[actualIndex].value = None
-            self.__set_safe(rowIndex, colIndex)
-
-    def is_editable(self, rowIndex: int, colIndex: int) -> bool:
-        self.__check_bounds(rowIndex, colIndex)
-
-        return self.__table[self.__actual_index(rowIndex, colIndex)].editable
+        return self.__table[self.__actual_index(rowIndex, colIndex)]
 
     def __check_bounds(self, rowIndex: int, colIndex: int) -> NoReturn:
         length = self.length
@@ -175,25 +153,35 @@ class RegularSudoku:
         if rowIndex < 0 or rowIndex >= length or colIndex < 0 or colIndex >= length:
             raise IndexError("Indices out of bounds")
 
+    def get(self, rowIndex: int, colIndex: int) -> Optional[str]:
+        return self.__get_cell(rowIndex, colIndex).value
+
+    def set(self, rowIndex: int, colIndex: int, newValue: Optional[str]) -> NoReturn:
+        cell = self.__get_cell(rowIndex, colIndex)
+
+        if not cell.value is None:
+            self.__set_safe(rowIndex, colIndex)
+        if not newValue is None:
+            self.__set_unsafe(rowIndex, colIndex, newValue)
+
+        cell.value = newValue
+
+    def delete(self, rowIndex: int, colIndex: int) -> NoReturn:
+        self.set(rowIndex, colIndex, None)
+
+    def is_editable(self, rowIndex: int, colIndex: int) -> bool:
+        return self.__get_cell(rowIndex, colIndex).editable
+
     def __actual_index(self, rowIndex: int, colIndex: int) -> int:
         return rowIndex * self.length + colIndex
 
     def __box_index(self, rowIndex: int, colIndex: int) -> int:
         return rowIndex // self.box_rows * self.box_rows + colIndex // self.box_cols
 
-    @property
-    def finalized(self) -> bool:
-        return self.__finalized
-
     def _finalize(self) -> NoReturn:
-        if self.__finalized:
-            raise StateError("Sudoku already finalized")
-
         for cell in self.__table:
             if cell.value is not None:
                 cell._set_editable(False)
-
-        self.__finalized = True
 
     def solved(self) -> bool:
         # TODO

@@ -4,7 +4,7 @@ from BitVector import BitVector
 from sudoku.Cell import _Cell
 from sudoku.SudokuInfo import SudokuInfo
 
-class __RegularSafety:
+class _RegularSafety:
     def __init__(self, length: int):
         bits = ~(~0 << length)
 
@@ -43,10 +43,10 @@ class __RegularSafety:
         return (rowWeight, colWeight, boxWeight)
 
 class RegularSudoku:
-    def __init__(self, info: SudokuInfo, table: List[_Cell], safety: __RegularSafety):
+    def __init__(self, info: SudokuInfo, table: List[_Cell], safety: _RegularSafety):
         self.__info: SudokuInfo = info
         self.__table: List[_Cell] = table
-        self.__safety: __RegularSafety = safety
+        self.__safety: _RegularSafety = safety
 
     @property
     def _info(self) -> SudokuInfo:

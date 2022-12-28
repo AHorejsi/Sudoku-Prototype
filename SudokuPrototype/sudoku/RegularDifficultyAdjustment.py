@@ -40,14 +40,18 @@ def __do_adjustment(puzzle: RegularSudoku, amountOfGivens: int, lowerBoundOfGive
                 puzzle.delete(rowIndex1, colIndex1)
                 puzzle.delete(rowIndex2, colIndex2)
 
+                valueCount -= 2
+
                 if not _has_unique_solution(puzzle):
                     puzzle.set(rowIndex1, colIndex1, value1)
                     puzzle.set(rowIndex2, colIndex2, value2)
 
+                    valueCount += 2
+
                 if valueCount <= amountOfGivens:
                     return
 
-def _adjust_for_difficulty(puzzle: RegularSudoku) -> NoReturn:
+def _adjust_for_difficulty_regular(puzzle: RegularSudoku) -> NoReturn:
     amountOfGivens = __decide_amount_of_givens(puzzle)
     lowerBoundOfGivensOnUnit = __decide_lower_bound_on_unit(puzzle)
 

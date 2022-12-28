@@ -184,7 +184,7 @@ def __swap(puzzle: RegularSudoku, legalValues: List[str]) -> NoReturn:
             if value is not None:
                 puzzle.set(rowIndex, colIndex, swapper[value])
 
-def _shuffle_board(puzzle: RegularSudoku, legalValues: List[str]) -> NoReturn:
+def _shuffle_board_regular(puzzle: RegularSudoku, legalValues: List[str]) -> NoReturn:
     __flip(puzzle)
     __flip_box(puzzle)
     __inner(puzzle)

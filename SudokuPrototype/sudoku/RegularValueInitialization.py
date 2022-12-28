@@ -1,5 +1,6 @@
-from typing import NoReturn, List
+from typing import NoReturn, List, Dict
 from random import shuffle
+from copy import copy
 from sudoku.RegularSudoku import RegularSudoku
 
 def __next(rowIndex: int, colIndex: int, puzzle: RegularSudoku) -> (int, int):
@@ -11,24 +12,48 @@ def __next(rowIndex: int, colIndex: int, puzzle: RegularSudoku) -> (int, int):
 
     return (rowIndex, colIndex)
 
-def __value_initialize_helper2(puzzle: RegularSudoku, legalValues: List[str], rowIndex: int, colIndex: int) -> bool:
+def __value_initialize_helper2(
+        puzzle: RegularSudoku,
+        valueDict: Dict[(int, int), List[str]],
+        rowIndex: int,
+        colIndex: int
+) -> bool:
     (rowIndex, colIndex) = __next(rowIndex, colIndex, puzzle)
 
-    return puzzle.length == rowIndex or __value_initialize_helper1(puzzle, legalValues, rowIndex, colIndex)
+    return puzzle.length == rowIndex or __value_initialize_helper1(puzzle, valueDict, rowIndex, colIndex)
 
-def __value_initialize_helper1(puzzle: RegularSudoku, legalValues: List[str], rowIndex: int, colIndex: int) -> bool:
-    shuffle(legalValues)
+def __value_initialize_helper1(
+        puzzle: RegularSudoku,
+        valueDict: Dict[(int, int), List[str]],
+        rowIndex: int,
+        colIndex: int
+) -> bool:
+    legalValues = valueDict[(rowIndex, colIndex)]
 
     for value in legalValues:
-        if puzzle.safe(rowIndex, colIndex, value):
+        if puzzle.is_safe(rowIndex, colIndex, value):
             puzzle.set(rowIndex, colIndex, value)
 
-            if __value_initialize_helper2(puzzle, legalValues, rowIndex, colIndex):
+            if __value_initialize_helper2(puzzle, valueDict, rowIndex, colIndex):
                 return True
 
             puzzle.delete(rowIndex, colIndex)
 
     return False
 
-def _value_initialize(puzzle: RegularSudoku, legalValues: List[str]) -> NoReturn:
-    __value_initialize_helper1(puzzle, legalValues, 0, 0)
+def __shuffle_values(puzzle: RegularSudoku, legalValues: List[str]) -> Dict[(int, int), List[str]]:
+    length = puzzle.length
+    valueDict = {}
+
+    for rowIndex in range(length):
+        for colIndex in range(length):
+            legalValuesCopy = copy(legalValues)
+            shuffle(legalValuesCopy)
+
+            valueDict[(rowIndex, colIndex)] = legalValuesCopy
+
+    return valueDict
+
+def _value_initialize_regular(puzzle: RegularSudoku, legalValues: List[str]) -> NoReturn:
+    valueDict = __shuffle_values(puzzle, legalValues)
+    __value_initialize_helper1(puzzle, valueDict, 0, 0)

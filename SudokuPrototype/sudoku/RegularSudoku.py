@@ -113,9 +113,8 @@ class RegularSudoku:
     def lower_bound_of_givens_per_unit(self) -> int:
         return self.__info.difficulty.value["lowerBoundOfGivensPerUnit"]
 
-    def safe(self, rowIndex: int, colIndex: int, value: str) -> bool:
-        if rowIndex < 0 or rowIndex >= self.length or colIndex < 0 or colIndex >= self.length:
-            raise IndexError("Indices out of bounds")
+    def is_safe(self, rowIndex: int, colIndex: int, value: str) -> bool:
+        self.__check_bounds(rowIndex, colIndex)
 
         valueIndex = self.__order(value)
         boxIndex = self.__box_index(rowIndex, colIndex)

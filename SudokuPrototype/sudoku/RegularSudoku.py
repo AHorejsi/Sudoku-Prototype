@@ -1,55 +1,16 @@
-from __future__ import annotations
 from typing import List, NoReturn, Optional
-from BitVector import BitVector
 from sudoku.Cell import _Cell
-from sudoku.SudokuInfo import SudokuInfo
-
-class _RegularSafety:
-    def __init__(self, length: int):
-        bits = ~(~0 << length)
-
-        self.__rowSafety: List[BitVector] = [BitVector(intVal=bits, size=length)] * length
-        self.__colSafety: List[BitVector] = [BitVector(intVal=bits, size=length)] * length
-        self.__boxSafety: List[BitVector] = [BitVector(intVal=bits, size=length)] * length
-
-    def safe(self, rowIndex: int, colIndex: int, boxIndex: int, valueIndex: int) -> bool:
-        mask = 1 << valueIndex
-
-        rowSafe = 0 != self.__rowSafety[rowIndex] & mask
-        colSafe = 0 != self.__colSafety[colIndex] & mask
-        boxSafe = 0 != self.__boxSafety[boxIndex] & mask
-
-        return rowSafe and colSafe and boxSafe
-
-    def set_safe(self, rowIndex: int, colIndex: int, boxIndex: int, valueIndex: int) -> NoReturn:
-        mask = 1 << valueIndex
-
-        self.__rowSafety[rowIndex] |= mask
-        self.__colSafety[colIndex] |= mask
-        self.__boxSafety[boxIndex] |= mask
-
-    def set_unsafe(self, rowIndex: int, colIndex: int, boxIndex: int, valueIndex: int) -> NoReturn:
-        mask = ~(1 << valueIndex)
-
-        self.__rowSafety[rowIndex] &= mask
-        self.__colSafety[colIndex] &= mask
-        self.__boxSafety[boxIndex] &= mask
-
-    def weight(self, rowIndex: int, colIndex: int, boxIndex: int) -> (int, int, int):
-        rowWeight = self.__rowSafety[rowIndex].count_bits()
-        colWeight = self.__colSafety[colIndex].count_bits()
-        boxWeight = self.__boxSafety[boxIndex].count_bits()
-
-        return (rowWeight, colWeight, boxWeight)
+from sudoku.RegularInfo import RegularInfo
+from sudoku.RegularSafety import _RegularSafety
 
 class RegularSudoku:
-    def __init__(self, info: SudokuInfo, table: List[_Cell], safety: _RegularSafety):
-        self.__info: SudokuInfo = info
+    def __init__(self, info: RegularInfo, table: List[_Cell], safety: _RegularSafety):
+        self.__info: RegularInfo = info
         self.__table: List[_Cell] = table
         self.__safety: _RegularSafety = safety
 
     @property
-    def _info(self) -> SudokuInfo:
+    def _info(self) -> RegularInfo:
         return self.__info
 
     @property
@@ -181,9 +142,8 @@ class RegularSudoku:
             if cell.value is not None:
                 cell._set_editable(False)
 
-    def solved(self) -> bool:
-        # TODO
-        pass
+    def is_solved(self) -> bool:
+        return self.__safety.solved()
 
     def __repr__(self) -> str:
         length = self.length

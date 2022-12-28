@@ -20,7 +20,7 @@ class Difficulty(Enum):
     HARD: Dict[str, int | str] = { "name": "Hard", "lowerBoundOfGivens": 35, "upperBoundOfGivens": 38, "lowerBoundOfGivensPerUnit": 22 }
     MASTER: Dict[str, int | str] = { "name": "Master", "lowerBoundOfGivens": 21, "upperBoundOfGivens": 33, "lowerBoundOfGivensPerUnit": 0 }
 
-class SudokuInfo:
+class RegularInfo:
     def __init__(self, dimensions: Dimension, difficulty: Difficulty):
         self.__dimensions = copy(dimensions)
         self.__difficulty = copy(difficulty)

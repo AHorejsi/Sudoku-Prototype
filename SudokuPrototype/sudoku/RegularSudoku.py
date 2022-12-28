@@ -1,11 +1,10 @@
 from __future__ import annotations
 from typing import List, NoReturn, Optional
 from BitVector import BitVector
-from sudoku.StateError import StateError
 from sudoku.Cell import _Cell
 from sudoku.SudokuInfo import SudokuInfo
 
-class _RegularSafety:
+class __RegularSafety:
     def __init__(self, length: int):
         bits = ~(~0 << length)
 
@@ -44,10 +43,10 @@ class _RegularSafety:
         return (rowWeight, colWeight, boxWeight)
 
 class RegularSudoku:
-    def __init__(self, info: SudokuInfo, table: List[_Cell], safety: _RegularSafety):
+    def __init__(self, info: SudokuInfo, table: List[_Cell], safety: __RegularSafety):
         self.__info: SudokuInfo = info
         self.__table: List[_Cell] = table
-        self.__safety: _RegularSafety = safety
+        self.__safety: __RegularSafety = safety
 
     @property
     def _info(self) -> SudokuInfo:

@@ -3,13 +3,13 @@ from sudoku.RegularDifficultyAdjustment import _adjust_for_difficulty
 from sudoku.RegularShuffler import _shuffle_board
 from sudoku.Cell import _Cell
 from sudoku.SudokuInfo import SudokuInfo
-from sudoku.RegularSudoku import RegularSudoku, _RegularSafety
+from sudoku.RegularSudoku import RegularSudoku, __RegularSafety
 
 def generate_regular(info: SudokuInfo) -> RegularSudoku:
     length = info.dimensions.value["length"]
 
     table = [_Cell(None, True)] * (length * length)
-    safety = _RegularSafety(length)
+    safety = __RegularSafety(length)
     legalValues = list(info.dimensions.value["legal"])
 
     puzzle = RegularSudoku(info, table, safety)

@@ -1,4 +1,4 @@
-from typing import NoReturn, List, Dict
+from typing import NoReturn, List, Dict, Tuple
 from random import shuffle
 from copy import copy
 from sudoku.RegularSudoku import RegularSudoku
@@ -12,36 +12,27 @@ def __next(rowIndex: int, colIndex: int, puzzle: RegularSudoku) -> (int, int):
 
     return (rowIndex, colIndex)
 
-def __value_initialize_helper2(
+def __value_initialize_helper(
         puzzle: RegularSudoku,
-        valueDict: Dict[(int, int), List[str]],
-        rowIndex: int,
-        colIndex: int
-) -> bool:
-    (rowIndex, colIndex) = __next(rowIndex, colIndex, puzzle)
-
-    return puzzle.length == rowIndex or __value_initialize_helper1(puzzle, valueDict, rowIndex, colIndex)
-
-def __value_initialize_helper1(
-        puzzle: RegularSudoku,
-        valueDict: Dict[(int, int), List[str]],
+        valueDict: Dict[Tuple[int, int], List[str]],
         rowIndex: int,
         colIndex: int
 ) -> bool:
     legalValues = valueDict[(rowIndex, colIndex)]
+    (nextRowIndex, nextColIndex) = __next(rowIndex, colIndex, puzzle)
 
     for value in legalValues:
         if puzzle.is_safe(rowIndex, colIndex, value):
             puzzle.set(rowIndex, colIndex, value)
 
-            if __value_initialize_helper2(puzzle, valueDict, rowIndex, colIndex):
+            if puzzle.length == nextRowIndex or __value_initialize_helper(puzzle, valueDict, nextRowIndex, nextColIndex):
                 return True
 
             puzzle.delete(rowIndex, colIndex)
 
     return False
 
-def __shuffle_values(puzzle: RegularSudoku, legalValues: List[str]) -> Dict[(int, int), List[str]]:
+def __shuffle_values(puzzle: RegularSudoku, legalValues: List[str]) -> Dict[Tuple[int, int], List[str]]:
     length = puzzle.length
     valueDict = {}
 
@@ -56,4 +47,5 @@ def __shuffle_values(puzzle: RegularSudoku, legalValues: List[str]) -> Dict[(int
 
 def _value_initialize_regular(puzzle: RegularSudoku, legalValues: List[str]) -> NoReturn:
     valueDict = __shuffle_values(puzzle, legalValues)
-    __value_initialize_helper1(puzzle, valueDict, 0, 0)
+
+    __value_initialize_helper(puzzle, valueDict, 0, 0)

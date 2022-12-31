@@ -1,9 +1,30 @@
-from sudoku import *
+from typing import NoReturn
+from sudoku import generate_regular, RegularDimension, RegularDifficulty, RegularInfo
+
+def __regular() -> NoReturn:
+    puzzleList = []
+
+    for dimension in RegularDimension:
+        for difficulty in RegularDifficulty:
+            info = RegularInfo(dimension, difficulty)
+            new = generate_regular(info)
+
+            puzzleList.append(new)
+
+    for puzzle in puzzleList:
+        print(puzzle)
+
+def __hyper():
+    pass
+
+def __killer():
+    pass
+
+def __jigsaw():
+    pass
 
 if "__main__" == __name__:
-    for dimension in Dimension:
-        for difficulty in Difficulty:
-            info = RegularInfo(dimension, difficulty)
-
-            puzzle = generate_regular(info)
-            print(puzzle)
+    __regular()
+    __hyper()
+    __killer()
+    __jigsaw()

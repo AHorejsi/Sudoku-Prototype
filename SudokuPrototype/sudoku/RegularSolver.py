@@ -1,4 +1,6 @@
 from typing import List, NoReturn, Any
+from sudoku.ExactCoverNode import _ExactCoverNode
+from sudoku.StateError import StateError
 from sudoku.RegularSudoku import RegularSudoku
 
 def __index(rowIndex: int, colIndex: int, valueIndex: int, length: int) -> int:
@@ -90,9 +92,110 @@ def __place_initial_values(puzzle: RegularSudoku, matrix: List[List[bool]]) -> N
                         index = __index(rowIndex, colIndex, valueIndex, length)
                         __fill(matrix[index], False)
 
-def _has_unique_solution(puzzle: RegularSudoku) -> bool:
-    legalValues = puzzle.legal
-    answer = []
+def __make_doubly_linked_matrix(matrix: List[List[bool]]) -> _ExactCoverNode:
+    mainHead = _ExactCoverNode()
+    headers = []
+    cols = len(matrix[0])
 
+    for _ in range(cols):
+        headNode = _ExactCoverNode()
+        headNode.column = headNode
+        headNode.size = 0
+
+        headers.append(headNode)
+
+        mainHead.hook_right(headNode)
+        mainHead = headNode
+
+    mainHead = mainHead.right.column
+
+    for row in matrix:
+        prev = None
+
+        for col in range(cols):
+            if row[col]:
+                headNode = headers[col]
+                newNode = _ExactCoverNode()
+
+                newNode.column = headNode
+                newNode.size = 0
+
+                if prev is None:
+                    prev = newNode
+
+                headNode.up.hook_down(newNode)
+                prev.hook_right(newNode)
+
+                prev = newNode
+
+                headNode.size += 1
+
+    mainHead.size = cols
+
+    return mainHead
+
+def __choose_next_column(header: _ExactCoverNode) -> _ExactCoverNode:
+    minimum = None
+    nextToUse = None
+    colNode = header.right
+
+    while colNode is not header:
+        size = colNode.size
+
+        if minimum is None or size < minimum:
+            minimum = size
+            nextToUse = colNode
+
+        colNode = colNode.right
+
+    return nextToUse
+
+
+def __count_solutions(k: int, count: int, header: _ExactCoverNode) -> int:
+    if header.right is header:
+        count += 1
+    else:
+        colNode = __choose_next_column(header)
+        colNode.cover()
+
+        node1 = colNode.down
+
+        while node1 is not colNode:
+            node2 = node1.right
+
+            while node2 is not node1:
+                node2.column.cover()
+
+                node2 = node2.right
+
+            count = __count_solutions(k + 1, count, header)
+
+            if count > 1:
+                return count
+
+            colNode = node1.column
+
+            node2 = node1.left
+
+            while node2 is not node1:
+                node2.column.uncover()
+
+                node2 = node2.left
+
+
+
+        colNode.uncover()
+
+    return count
+
+def _has_unique_solution(puzzle: RegularSudoku) -> bool:
     matrix = __make_matrix(puzzle)
     __place_initial_values(puzzle, matrix)
+    header = __make_doubly_linked_matrix(matrix)
+
+    solutionCount = __count_solutions(0, 0, header)
+
+    if 0 == solutionCount:
+        raise StateError("No solutions found")
+
+    return 1 == solutionCount

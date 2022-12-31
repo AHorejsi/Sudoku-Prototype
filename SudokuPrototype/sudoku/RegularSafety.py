@@ -1,17 +1,13 @@
 from typing import List, NoReturn
-from BitVector import BitVector
 
 class _RegularSafety:
     def __init__(self, length: int):
         bits = ~(~0 << length)
 
-        self.__rowSafety: List[BitVector] = [BitVector(intVal=bits, size=length)] * length
-        self.__colSafety: List[BitVector] = [BitVector(intVal=bits, size=length)] * length
-        self.__boxSafety: List[BitVector] = [BitVector(intVal=bits, size=length)] * length
-
-    @property
-    def length(self) -> int:
-        return len(self.__rowSafety)
+        self.__length = length
+        self.__rowSafety: List[int] = [bits] * length
+        self.__colSafety: List[int] = [bits] * length
+        self.__boxSafety: List[int] = [bits] * length
 
     def safe(self, rowIndex: int, colIndex: int, boxIndex: int, valueIndex: int) -> bool:
         mask = 1 << valueIndex
@@ -36,19 +32,37 @@ class _RegularSafety:
         self.__colSafety[colIndex] &= mask
         self.__boxSafety[boxIndex] &= mask
 
+    def __hamming_weight(self, val: int) -> int:
+        oneZeroOneOne = 0x5555555555555555
+        twoZeroesTwoOnes = 0x3333333333333333
+        fourZeroesFourOnes = 0x0f0f0f0f0f0f0f0f
+
+        val -= (val >> 1) & oneZeroOneOne
+        val = (val & twoZeroesTwoOnes) + ((val >> 2) & twoZeroesTwoOnes)
+        val = (val + (val >> 4)) & fourZeroesFourOnes
+        val += val >> 8
+        val += val >> 16
+        val += val >> 32
+
+        return val & 0x7f
+
     def weight(self, rowIndex: int, colIndex: int, boxIndex: int) -> (int, int, int):
-        rowWeight = self.__rowSafety[rowIndex].count_bits()
-        colWeight = self.__colSafety[colIndex].count_bits()
-        boxWeight = self.__boxSafety[boxIndex].count_bits()
+        rowWeight = self.__hamming_weight(self.__rowSafety[rowIndex])
+        colWeight = self.__hamming_weight(self.__colSafety[colIndex])
+        boxWeight = self.__hamming_weight(self.__boxSafety[boxIndex])
 
         return (rowWeight, colWeight, boxWeight)
 
-    def solved(self) -> bool:
-        return self.__solved(self.__rowSafety) and self.__solved(self.__colSafety) and self.__solved(self.__boxSafety)
+    def all_unsafe(self) -> bool:
+        allRowsUnsafe = self.__all_unsafe_helper(self.__rowSafety)
+        allColsUnsafe = self.__all_unsafe_helper(self.__colSafety)
+        allBoxesUnsafe = self.__all_unsafe_helper(self.__boxSafety)
 
-    def __solved(self, safety: List[BitVector]) -> bool:
-        for index in range(self.length):
-            if 0 != safety[index].intValue:
+        return allRowsUnsafe and allColsUnsafe and allBoxesUnsafe
+
+    def __all_unsafe_helper(self, safety: List[int]) -> bool:
+        for index in range(self.__length):
+            if 0 != safety[index]:
                 return False
 
         return True

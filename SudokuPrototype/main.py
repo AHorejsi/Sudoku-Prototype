@@ -1,3 +1,4 @@
+from sys import setrecursionlimit
 from typing import NoReturn
 from sudoku import generate_regular, RegularDimension, RegularDifficulty, RegularInfo
 
@@ -24,6 +25,8 @@ def __jigsaw():
     pass
 
 if "__main__" == __name__:
+    setrecursionlimit(10000)
+
     __regular()
     __hyper()
     __killer()

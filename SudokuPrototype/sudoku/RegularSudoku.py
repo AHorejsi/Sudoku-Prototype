@@ -3,7 +3,6 @@ from copy import copy
 from enum import Enum
 from typing import List, NoReturn, Optional, Dict
 from sudoku.Cell import _Cell
-from sudoku.RegularSafety import _RegularSafety
 
 class RegularDimension(Enum):
     FOUR: Dict[str, int | str] = { "length": 4, "boxRows": 2, "boxCols": 2, "legal": "1234" }
@@ -35,6 +34,73 @@ class RegularInfo:
     def difficulty(self) -> RegularDifficulty:
         return self.__difficulty
 
+class _RegularSafety:
+    def __init__(self, length: int):
+        bits = ~(~0 << length)
+
+        self.__length = length
+        self.__rowSafety: List[int] = [bits] * length
+        self.__colSafety: List[int] = [bits] * length
+        self.__boxSafety: List[int] = [bits] * length
+
+    def safe(self, rowIndex: int, colIndex: int, boxIndex: int, valueIndex: int) -> bool:
+        mask = 1 << valueIndex
+
+        rowSafe = 0 != self.__rowSafety[rowIndex] & mask
+        colSafe = 0 != self.__colSafety[colIndex] & mask
+        boxSafe = 0 != self.__boxSafety[boxIndex] & mask
+
+        return rowSafe and colSafe and boxSafe
+
+    def set_safe(self, rowIndex: int, colIndex: int, boxIndex: int, valueIndex: int) -> NoReturn:
+        mask = 1 << valueIndex
+
+        self.__rowSafety[rowIndex] |= mask
+        self.__colSafety[colIndex] |= mask
+        self.__boxSafety[boxIndex] |= mask
+
+    def set_unsafe(self, rowIndex: int, colIndex: int, boxIndex: int, valueIndex: int) -> NoReturn:
+        mask = ~(1 << valueIndex)
+
+        self.__rowSafety[rowIndex] &= mask
+        self.__colSafety[colIndex] &= mask
+        self.__boxSafety[boxIndex] &= mask
+
+    def __hamming_weight(self, val: int) -> int:
+        oneZeroOneOne = 0x5555555555555555
+        twoZeroesTwoOnes = 0x3333333333333333
+        fourZeroesFourOnes = 0x0f0f0f0f0f0f0f0f
+
+        val -= (val >> 1) & oneZeroOneOne
+        val = (val & twoZeroesTwoOnes) + ((val >> 2) & twoZeroesTwoOnes)
+        val = (val + (val >> 4)) & fourZeroesFourOnes
+        val += val >> 8
+        val += val >> 16
+        val += val >> 32
+
+        return val & 0x7f
+
+    def weight(self, rowIndex: int, colIndex: int, boxIndex: int) -> (int, int, int):
+        rowWeight = self.__hamming_weight(self.__rowSafety[rowIndex])
+        colWeight = self.__hamming_weight(self.__colSafety[colIndex])
+        boxWeight = self.__hamming_weight(self.__boxSafety[boxIndex])
+
+        return (rowWeight, colWeight, boxWeight)
+
+    def all_unsafe(self) -> bool:
+        allRowsUnsafe = self.__all_unsafe_helper(self.__rowSafety)
+        allColsUnsafe = self.__all_unsafe_helper(self.__colSafety)
+        allBoxesUnsafe = self.__all_unsafe_helper(self.__boxSafety)
+
+        return allRowsUnsafe and allColsUnsafe and allBoxesUnsafe
+
+    def __all_unsafe_helper(self, safety: List[int]) -> bool:
+        for index in range(self.__length):
+            if 0 != safety[index]:
+                return False
+
+        return True
+
 class RegularSudoku:
     def __init__(self, info: RegularInfo, table: List[_Cell], safety: _RegularSafety):
         self.__info: RegularInfo = info
@@ -58,11 +124,11 @@ class RegularSudoku:
         return self.__info.dimensions.value["boxCols"]
 
     @property
-    def row_boxes(self) -> int:
+    def rows_in_box(self) -> int:
         return self.length // self.box_cols
 
     @property
-    def col_boxes(self) -> int:
+    def cols_in_boxes(self) -> int:
         return self.length // self.box_rows
 
     @property
@@ -142,12 +208,15 @@ class RegularSudoku:
         length = self.length
 
         if rowIndex < 0 or rowIndex >= length or colIndex < 0 or colIndex >= length:
-            raise IndexError("Indices out of bounds")
+            raise IndexError(f"Indices out of bounds: [rowIndex: {rowIndex}, colIndex: {colIndex}, length: {length}]")
 
     def get(self, rowIndex: int, colIndex: int) -> Optional[str]:
         return self.__get_cell(rowIndex, colIndex).value
 
     def set(self, rowIndex: int, colIndex: int, newValue: Optional[str]) -> NoReturn:
+        if newValue is not None and not self.is_legal(newValue):
+            raise ValueError("Invalid character")
+
         cell = self.__get_cell(rowIndex, colIndex)
 
         if not cell.value is None:

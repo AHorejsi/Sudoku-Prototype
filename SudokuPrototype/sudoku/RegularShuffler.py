@@ -61,8 +61,8 @@ def __flip_box_by_col(puzzle: RegularSudoku, colBoxes: int) -> NoReturn:
                 puzzle.set(i, j + distance, temp)
 
 def __flip_box(puzzle: RegularSudoku) -> NoReturn:
-    rowBoxes = puzzle.row_boxes
-    colBoxes = puzzle.col_boxes
+    rowBoxes = puzzle.rows_in_box
+    colBoxes = puzzle.cols_in_boxes
 
     for _ in range(rowBoxes):
         __flip_box_by_row(puzzle, rowBoxes)
@@ -186,7 +186,7 @@ def __swap(puzzle: RegularSudoku, legalValues: List[str]) -> NoReturn:
 
 def _shuffle_board_regular(puzzle: RegularSudoku, legalValues: List[str]) -> NoReturn:
     __flip(puzzle)
-    __flip_box(puzzle)
+    #__flip_box(puzzle)
     __inner(puzzle)
     __rotate(puzzle)
     __swap(puzzle, legalValues)

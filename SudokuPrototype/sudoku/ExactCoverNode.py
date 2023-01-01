@@ -8,21 +8,17 @@ class _ExactCoverNode:
         self.left = self
         self.right = self
 
-    def hook_down(self, other: _ExactCoverNode) -> NoReturn: # Check if return is necessary
+    def hook_down(self, other: _ExactCoverNode) -> NoReturn:
         other.down = self.down
         other.down.up = other
         other.up = self
         self.down = other
 
-        # return other
-
-    def hook_right(self, other: _ExactCoverNode) -> NoReturn: # Check if return is necessary
+    def hook_right(self, other: _ExactCoverNode) -> NoReturn:
         other.right = self.right
         other.right.left = other
         other.left = self
         self.right = other
-
-        # return other
 
     def unlink_left_right(self) -> NoReturn:
         self.right.left = self.left
@@ -57,6 +53,8 @@ class _ExactCoverNode:
 
                 node2 = node2.right
 
+            node1 = node1.down
+
     def uncover(self) -> NoReturn:
         if not hasattr(self, "column") or not hasattr(self, "size"):
             raise ValueError("Not a column node")
@@ -71,3 +69,7 @@ class _ExactCoverNode:
                 node2.relink_up_down()
 
                 node2 = node2.left
+
+            node1 = node1.up
+
+        self.relink_left_right()

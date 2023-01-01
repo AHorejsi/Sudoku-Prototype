@@ -18,6 +18,9 @@ def __value_initialize_helper(
         rowIndex: int,
         colIndex: int
 ) -> bool:
+    if rowIndex == puzzle.length:
+        return True
+
     legalValues = valueDict[(rowIndex, colIndex)]
     (nextRowIndex, nextColIndex) = __next(rowIndex, colIndex, puzzle)
 
@@ -25,7 +28,7 @@ def __value_initialize_helper(
         if puzzle.is_safe(rowIndex, colIndex, value):
             puzzle.set(rowIndex, colIndex, value)
 
-            if puzzle.length == nextRowIndex or __value_initialize_helper(puzzle, valueDict, nextRowIndex, nextColIndex):
+            if __value_initialize_helper(puzzle, valueDict, nextRowIndex, nextColIndex):
                 return True
 
             puzzle.delete(rowIndex, colIndex)

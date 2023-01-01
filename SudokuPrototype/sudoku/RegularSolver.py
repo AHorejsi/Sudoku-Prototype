@@ -62,9 +62,17 @@ def __check_box_constraint(hBase: int, matrix: List[List[bool]], length: int, bo
 
                 hBase += 1
 
+def __initialize_matrix(length: int) -> List[List[bool]]:
+    matrix = []
+
+    for _ in range(length * length * length):
+        matrix.append([False] * (4 * length * length))
+
+    return matrix
+
 def __make_matrix(puzzle: RegularSudoku) -> List[List[bool]]:
     length = puzzle.length
-    matrix = [[False] * (4 * length * length)] * (length * length * length)
+    matrix = __initialize_matrix(length)
     hBase = 0
 
     hBase = __check_cell_constraint(hBase, matrix, length)
@@ -96,6 +104,8 @@ def __make_doubly_linked_matrix(matrix: List[List[bool]]) -> _ExactCoverNode:
     mainHead = _ExactCoverNode()
     headers = []
     cols = len(matrix[0])
+
+    mainHead.column = mainHead
 
     for _ in range(cols):
         headNode = _ExactCoverNode()
@@ -151,7 +161,7 @@ def __choose_next_column(header: _ExactCoverNode) -> _ExactCoverNode:
     return nextToUse
 
 
-def __count_solutions(k: int, count: int, header: _ExactCoverNode) -> int:
+def __count_solutions(count: int, header: _ExactCoverNode) -> int:
     if header.right is header:
         count += 1
     else:
@@ -168,7 +178,7 @@ def __count_solutions(k: int, count: int, header: _ExactCoverNode) -> int:
 
                 node2 = node2.right
 
-            count = __count_solutions(k + 1, count, header)
+            count = __count_solutions(count, header)
 
             if count > 1:
                 return count
@@ -182,7 +192,7 @@ def __count_solutions(k: int, count: int, header: _ExactCoverNode) -> int:
 
                 node2 = node2.left
 
-
+            node1 = node1.down
 
         colNode.uncover()
 
@@ -193,9 +203,9 @@ def _has_unique_solution(puzzle: RegularSudoku) -> bool:
     __place_initial_values(puzzle, matrix)
     header = __make_doubly_linked_matrix(matrix)
 
-    solutionCount = __count_solutions(0, 0, header)
+    solutionCount = __count_solutions(0, header)
 
     if 0 == solutionCount:
         raise StateError("No solutions found")
-
-    return 1 == solutionCount
+    else:
+        return 1 == solutionCount

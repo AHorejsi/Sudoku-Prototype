@@ -15,13 +15,13 @@ def __regular() -> NoReturn:
     for puzzle in puzzleList:
         print(puzzle)
 
-def __hyper():
+def __hyper() -> NoReturn:
     pass
 
-def __killer():
+def __killer() -> NoReturn:
     pass
 
-def __jigsaw():
+def __jigsaw() -> NoReturn:
     pass
 
 if "__main__" == __name__:

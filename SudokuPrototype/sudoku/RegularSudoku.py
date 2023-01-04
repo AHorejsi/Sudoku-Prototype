@@ -1,38 +1,154 @@
 from __future__ import annotations
-from copy import copy
+from dataclasses import dataclass
 from enum import Enum
 from typing import List, NoReturn, Optional, Dict
 from sudoku.Cell import _Cell
 
 class RegularDimension(Enum):
+    """
+    Specifies the dimensions allowed for regular sudoku boards.
+    Each value has a corresponding dictionary specifying various properties
+    for boards of the given number of dimensions. The properties contained
+    in each dictionary are 'length', 'boxRows', 'boxCols' and 'legal'.
+    'length' specifies the total number of rows and columns for a board.
+    'boxRows' specifies the number of rows in each box.
+    'boxCols' specifies the number of columns in each box.
+    'legal' specifies the valid characters for the board, in sorted order
+    """
+
     FOUR: Dict[str, int | str] = { "length": 4, "boxRows": 2, "boxCols": 2, "legal": "1234" }
+    """
+    Info for 4x4 boards. See docstring of 'RegularDimension for more details
+    """
+
     SIX: Dict[str, int | str] = { "length": 6, "boxRows": 2, "boxCols": 3, "legal": "123456" }
+    """
+    Info for 6x6 boards. See docstring of 'RegularDimension for more details
+    """
+
     EIGHT: Dict[str, int | str] = { "length": 8, "boxRows": 4, "boxCols": 2, "legal": "01234567" }
+    """
+    Info for 8x8 boards. See docstring of 'RegularDimension for more details
+    """
+
     NINE: Dict[str, int | str] = { "length": 9, "boxRows": 3, "boxCols": 3, "legal": "123456789" }
+    """
+    Info for 9x9 boards. See docstring of 'RegularDimension for more details
+    """
+
     TEN: Dict[str, int | str] = { "length": 10, "boxRows": 2, "boxCols": 5, "legal": "0123456789" }
+    """
+    Info for 10x10 boards. See docstring of 'RegularDimension for more details
+    """
+
     TWELVE: Dict[str, int | str] = { "length": 12, "boxRows": 3, "boxCols": 4, "legal": "0123456789AB" }
+    """
+    Info for 12x12 boards. See docstring of 'RegularDimension for more details
+    """
+
     FIFTEEN: Dict[str, int | str] = { "length": 15, "boxRows": 5, "boxCols": 3, "legal": "123456789ABCDEF" }
+    """
+    Info for 15x15 boards. See docstring of 'RegularDimension for more details
+    """
+
     SIXTEEN: Dict[str, int | str] = { "length": 16, "boxRows": 4, "boxCols": 4, "legal": "0123456789ABCDEF" }
+    """
+    Info for 16x26 boards. See docstring of 'RegularDimension for more details
+    """
 
 class RegularDifficulty(Enum):
+    """
+    Specifies the difficulty levels for regular sudoku boards.
+    Each value has a dictionary specifying various properties that any generated board
+    must meet. The properties contained in each dictionary are 'name', 'lowerBoundOfGivens', 'upperBoundOfGivens',
+    'lowerBoundOfGivensPerUnit'. 'name' provides a string representation of the difficulty's name.
+    'lowerBoundOfGivens' specifies the minimum percentage of initial values to be provided.
+    'upperBoundOfGivens' specifies the maximum percentage of initial values to be provided.
+    'lowerBoundOfGivensPerUnit' specifies the minimum percentage of initial values to be provided in all units.
+    A unit refers to a given cells row, column and box
+    """
+
     BEGINNER: Dict[str, int | str] = { "name": "Beginner", "lowerBoundOfGivens": 58, "upperBoundOfGivens": 68, "lowerBoundOfGivensPerUnit": 55 }
+    """
+    Info for beginner-level puzzles. See docstring of 'RegularDifficulty for more info
+    """
+
     EASY: Dict[str, int | str] = { "name": "Easy", "lowerBoundOfGivens": 44, "upperBoundOfGivens": 57, "lowerBoundOfGivensPerUnit": 44 }
+    """
+    Info for easy-level puzzles. See docstring of 'RegularDifficulty for more info
+    """
+
     MEDIUM: Dict[str, int | str] = { "name": "Medium", "lowerBoundOfGivens": 40, "upperBoundOfGivens": 43, "lowerBoundOfGivensPerUnit": 44 }
+    """
+    Info for medium-level puzzles. See docstring of 'RegularDifficulty for more info
+    """
+
     HARD: Dict[str, int | str] = { "name": "Hard", "lowerBoundOfGivens": 35, "upperBoundOfGivens": 38, "lowerBoundOfGivensPerUnit": 22 }
+    """
+    Info for hard-level puzzles. See docstring of 'RegularDifficulty for more info
+    """
+
     MASTER: Dict[str, int | str] = { "name": "Master", "lowerBoundOfGivens": 21, "upperBoundOfGivens": 33, "lowerBoundOfGivensPerUnit": 0 }
+    """
+    Info for master-level puzzles. See docstring of 'RegularDifficulty for more info
+    """
 
 class RegularInfo:
     def __init__(self, dimensions: RegularDimension, difficulty: RegularDifficulty):
-        self.__dimensions = copy(dimensions)
-        self.__difficulty = copy(difficulty)
+        self.__length = dimensions.value["length"]
+        self.__boxRows = dimensions.value["boxRows"]
+        self.__boxCols = dimensions.value["boxCols"]
+        self.__legal = dimensions.value["legal"]
+        self.__difficulty = difficulty.value["name"]
+        self.__lowerBoundOfGivens = difficulty.value["lowerBoundOfGivens"]
+        self.__upperBoundOfGivens = difficulty.value["upperBoundOfGivens"]
+        self.__lowerBoundOfGivensPerUnit = difficulty.value["lowerBoundOfGivensPerUnit"]
 
     @property
-    def dimensions(self) -> RegularDimension:
-        return self.__dimensions
+    def length(self) -> int:
+        return self.__length
 
     @property
-    def difficulty(self) -> RegularDifficulty:
+    def box_rows(self)  -> int:
+        return self.__boxRows
+
+    @property
+    def box_cols(self) -> int:
+        return self.__boxCols
+
+    @property
+    def rows_in_boxes(self) -> int:
+        return self.length // self.box_cols
+
+    @property
+    def cols_in_boxes(self) -> int:
+        return self.length // self.box_rows
+
+    def swap_box_dimensions(self) -> NoReturn:
+        temp = self.__boxRows
+        self.__boxRows = self.__boxCols
+        self.__boxCols = temp
+
+    @property
+    def legal(self) -> str:
+        return self.__legal
+
+    @property
+    def difficulty(self) -> str:
         return self.__difficulty
+
+    @property
+    def lower_bound_of_givens(self) -> int:
+        return self.__lowerBoundOfGivens
+
+    @property
+    def upper_bound_of_givens(self) -> int:
+        return self.__upperBoundOfGivens
+
+    @property
+    def lower_bound_of_givens_per_unit(self) -> int:
+        return self.__lowerBoundOfGivensPerUnit
+
 
 class _RegularSafety:
     def __init__(self, length: int):
@@ -67,13 +183,9 @@ class _RegularSafety:
         self.__boxSafety[boxIndex] &= mask
 
     def __hamming_weight(self, val: int) -> int:
-        oneZeroOneOne = 0x5555555555555555
-        twoZeroesTwoOnes = 0x3333333333333333
-        fourZeroesFourOnes = 0x0f0f0f0f0f0f0f0f
-
-        val -= (val >> 1) & oneZeroOneOne
-        val = (val & twoZeroesTwoOnes) + ((val >> 2) & twoZeroesTwoOnes)
-        val = (val + (val >> 4)) & fourZeroesFourOnes
+        val -= (val >> 1) & 0x5555555555555555
+        val = (val & 0x3333333333333333) + ((val >> 2) & 0x3333333333333333)
+        val = (val + (val >> 4)) & 0x0f0f0f0f0f0f0f0f
         val += val >> 8
         val += val >> 16
         val += val >> 32
@@ -101,42 +213,18 @@ class _RegularSafety:
 
         return True
 
+@dataclass
 class RegularSudoku:
-    def __init__(self, info: RegularInfo, table: List[_Cell], safety: _RegularSafety):
-        self.__info: RegularInfo = info
-        self.__table: List[_Cell] = table
-        self.__safety: _RegularSafety = safety
+    __info: RegularInfo
+    __table: List[_Cell]
+    __safety: _RegularSafety
 
     @property
     def _info(self) -> RegularInfo:
         return self.__info
 
-    @property
-    def length(self) -> int:
-        return self.__info.dimensions.value["length"]
-
-    @property
-    def box_rows(self) -> int:
-        return self.__info.dimensions.value["boxRows"]
-
-    @property
-    def box_cols(self) -> int:
-        return self.__info.dimensions.value["boxCols"]
-
-    @property
-    def rows_in_box(self) -> int:
-        return self.length // self.box_cols
-
-    @property
-    def cols_in_boxes(self) -> int:
-        return self.length // self.box_rows
-
-    @property
-    def legal(self) -> str:
-        return self.__info.dimensions.value["legal"]
-
     def __order(self, value: str) -> int:
-        legalValues = self.legal
+        legalValues = self.__info.legal
         lowIndex = 0
         highIndex = len(legalValues) - 1
 
@@ -153,24 +241,28 @@ class RegularSudoku:
 
         return -1
 
+    @property
+    def length(self) -> int:
+        return self.__info.length
+
+    @property
+    def box_rows(self) -> int:
+        return self.__info.box_rows
+
+    @property
+    def box_cols(self) -> int:
+        return self.__info.box_cols
+
+    @property
+    def rows_in_boxes(self) -> int:
+        return self.__info.rows_in_boxes
+
+    @property
+    def cols_in_boxes(self) -> int:
+        return self.__info.cols_in_boxes
+
     def is_legal(self, value: str) -> bool:
-        return -1 != self.__order(value)
-
-    @property
-    def difficulty(self) -> str:
-        return self.__info.difficulty.value["name"]
-
-    @property
-    def lower_bound_of_givens(self) -> int:
-        return self.__info.difficulty.value["lowerBoundOfGivens"]
-
-    @property
-    def upper_bound_of_givens(self) -> int:
-        return self.__info.difficulty.value["upperBoundOfGivens"]
-
-    @property
-    def lower_bound_of_givens_per_unit(self) -> int:
-        return self.__info.difficulty.value["lowerBoundOfGivensPerUnit"]
+        return value is None or -1 != self.__order(value)
 
     def is_safe(self, rowIndex: int, colIndex: int, value: str) -> bool:
         self.__check_bounds(rowIndex, colIndex)
@@ -186,9 +278,7 @@ class RegularSudoku:
 
         self.__safety.set_unsafe(rowIndex, colIndex, boxIndex, valueIndex)
 
-    def __set_safe(self, rowIndex: int, colIndex: int) -> NoReturn:
-        value = self.get(rowIndex, colIndex)
-
+    def __set_safe(self, rowIndex: int, colIndex: int, value: str) -> NoReturn:
         valueIndex = self.__order(value)
         boxIndex = self.__box_index(rowIndex, colIndex)
 
@@ -214,13 +304,14 @@ class RegularSudoku:
         return self.__get_cell(rowIndex, colIndex).value
 
     def set(self, rowIndex: int, colIndex: int, newValue: Optional[str]) -> NoReturn:
-        if newValue is not None and not self.is_legal(newValue):
+        if not self.is_legal(newValue):
             raise ValueError("Invalid character")
 
         cell = self.__get_cell(rowIndex, colIndex)
+        oldValue = cell.value
 
-        if not cell.value is None:
-            self.__set_safe(rowIndex, colIndex)
+        if not oldValue is None:
+            self.__set_safe(rowIndex, colIndex, oldValue)
         if not newValue is None:
             self.__set_unsafe(rowIndex, colIndex, newValue)
 
@@ -236,19 +327,19 @@ class RegularSudoku:
         return rowIndex * self.length + colIndex
 
     def __box_index(self, rowIndex: int, colIndex: int) -> int:
-        return rowIndex // self.box_rows * self.box_rows + colIndex // self.box_cols
+        return rowIndex // self.__info.box_rows * self.__info.box_rows + colIndex // self.__info.box_cols
 
     def _finalize(self) -> NoReturn:
         for cell in self.__table:
             if cell.value is not None:
-                cell._set_editable(False)
+                cell._make_noneditable()
 
     def is_solved(self) -> bool:
         return self.__safety.all_unsafe()
 
     def __repr__(self):
         length = self.length
-        result = f"{self.difficulty}\n"
+        result = f"{self.__info.difficulty}\n"
 
         for (count, cell) in enumerate(self.__table, 1):
             result += "*" if cell.value is None else cell.value

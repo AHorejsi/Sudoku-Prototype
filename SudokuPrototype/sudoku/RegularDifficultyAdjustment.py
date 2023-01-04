@@ -5,8 +5,8 @@ from sudoku.RegularSolver import _has_unique_solution
 
 def __decide_amount_of_givens(puzzle: RegularSudoku) -> int:
     total = puzzle.length * puzzle.length
-    upperBound = puzzle.upper_bound_of_givens
-    lowerBound = puzzle.lower_bound_of_givens
+    upperBound = puzzle._info.upper_bound_of_givens
+    lowerBound = puzzle._info.lower_bound_of_givens
 
     percent = randint(lowerBound, upperBound)
     amount = round(total * (percent / 100))
@@ -14,7 +14,7 @@ def __decide_amount_of_givens(puzzle: RegularSudoku) -> int:
     return amount
 
 def __decide_lower_bound_on_unit(puzzle: RegularSudoku) -> int:
-    return round(puzzle.length * (puzzle.lower_bound_of_givens_per_unit / 100))
+    return round(puzzle.length * (puzzle._info.lower_bound_of_givens_per_unit / 100))
 
 def __check_lower_bound(puzzle: RegularSudoku, rowIndex: int, colIndex: int, lowerBoundOfGivensOnUnit: int) -> bool:
     (rowWeight, colWeight, boxWeight) = puzzle._weight(rowIndex, colIndex)

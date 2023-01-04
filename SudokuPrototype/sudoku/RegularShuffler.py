@@ -69,13 +69,6 @@ def __flip_box(puzzle: RegularSudoku) -> NoReturn:
     for _ in range(colBoxes):
         __flip_box_by_col(puzzle, colBoxes)
 
-def __swap_box_dimensions(puzzle: RegularSudoku) -> NoReturn:
-    dimensionInfo = puzzle._info.dimensions.value
-
-    temp = dimensionInfo["boxRows"]
-    dimensionInfo["boxRows"] = dimensionInfo["boxCols"]
-    dimensionInfo["boxCols"] = temp
-
 def __inner_row(puzzle: RegularSudoku) -> NoReturn:
     boxRows = puzzle.box_rows
     rowIndex = 0
@@ -150,7 +143,7 @@ def __rotate270(puzzle: RegularSudoku) -> NoReturn:
             puzzle.set(x, y, puzzle.get(j, x))
             puzzle.set(j, x, temp)
 
-    __swap_box_dimensions(puzzle)
+    puzzle._info.swap_box_dimensions()
 
 def __rotate(puzzle: RegularSudoku) -> NoReturn:
     choice = randint(0, 4)
@@ -161,11 +154,13 @@ def __rotate(puzzle: RegularSudoku) -> NoReturn:
         __rotate180(puzzle)
     elif 2 == choice:
         __rotate270(puzzle)
+    else:
+        return
 
 def __assign_swaps(puzzle: RegularSudoku, legalValues: List[str]) -> Dict[str, str]:
     shuffle(legalValues)
 
-    legalCopy = puzzle.legal
+    legalCopy = puzzle._info.legal
     swapper = {}
 
     for (value1, value2) in zip(legalValues, legalCopy):
@@ -186,7 +181,7 @@ def __swap(puzzle: RegularSudoku, legalValues: List[str]) -> NoReturn:
 
 def _shuffle_board_regular(puzzle: RegularSudoku, legalValues: List[str]) -> NoReturn:
     __flip(puzzle)
-    #__flip_box(puzzle)
+    __flip_box(puzzle)
     __inner(puzzle)
     __rotate(puzzle)
     __swap(puzzle, legalValues)

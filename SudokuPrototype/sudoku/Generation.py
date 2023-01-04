@@ -9,13 +9,14 @@ def __make_cells(length: int) -> List[_Cell]:
     cells = []
 
     for _ in range(length * length):
-        cells.append(_Cell(None, True))
+        new = _Cell()
+        cells.append(new)
 
     return cells
 
 def generate_regular(info: RegularInfo) -> RegularSudoku:
-    legalValues = list(info.dimensions.value["legal"])
-    length = info.dimensions.value["length"]
+    legalValues = list(info.legal)
+    length = info.length
 
     table = __make_cells(length)
     safety = _RegularSafety(length)

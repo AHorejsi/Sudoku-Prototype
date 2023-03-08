@@ -1,27 +1,24 @@
 from sys import setrecursionlimit
-from typing import NoReturn
 from sudoku import generate_regular, RegularDimension, RegularDifficulty, RegularInfo
 
-def __regular() -> NoReturn:
-    puzzleList = []
-
+def __regular():
     for dimension in RegularDimension:
         for difficulty in RegularDifficulty:
             info = RegularInfo(dimension, difficulty)
             new = generate_regular(info)
 
-            puzzleList.append(new)
+            print(new)
+            print(f"Solved: {new.is_solved()}")
+            print(f"Valid: {new.is_valid()}")
+            print("\n")
 
-    for puzzle in puzzleList:
-        print(puzzle)
-
-def __hyper() -> NoReturn:
+def __hyper():
     pass
 
-def __killer() -> NoReturn:
+def __killer():
     pass
 
-def __jigsaw() -> NoReturn:
+def __jigsaw():
     pass
 
 if "__main__" == __name__:

@@ -1,3 +1,7 @@
+from typing import Optional
+from final_class import final
+
+@final
 class StateError(RuntimeError):
     """
     Indicates that the associated object had one of its methods called
@@ -5,7 +9,7 @@ class StateError(RuntimeError):
     or impossible to perform
     """
 
-    def __init__(self, message: str):
+    def __init__(self, message: Optional[str]=None):
         """
         Constructs a StateError with the specified message
         :param message: Detailed description of what caused the exception. Always a string
@@ -14,11 +18,10 @@ class StateError(RuntimeError):
         self.__message = message
 
     @property
-    def message(self) -> str:
+    def message(self) -> Optional[str]:
         """
         Returns the message
-
-        :return:
+        :return: The message associated with this StateError
         """
 
         return self.__message

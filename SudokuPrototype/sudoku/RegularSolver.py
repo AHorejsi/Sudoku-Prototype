@@ -1,4 +1,4 @@
-from typing import List, NoReturn, Any
+from typing import List, Any
 from sudoku.ExactCoverNode import _ExactCoverNode
 from sudoku.StateError import StateError
 from sudoku.RegularSudoku import RegularSudoku
@@ -48,13 +48,13 @@ def __traverse_box(
         length: int,
         boxRows: int,
         boxCols: int
-) -> NoReturn:
+):
     for rowDelta in range(boxRows):
         for colDelta in range(boxCols):
             index = __index(rowIndex + rowDelta, colIndex + colDelta, valueIndex, length)
             matrix[index][hBase] = True
 
-def __check_box_constraint(hBase: int, matrix: List[List[bool]], length: int, boxRows: int, boxCols: int) -> NoReturn:
+def __check_box_constraint(hBase: int, matrix: List[List[bool]], length: int, boxRows: int, boxCols: int):
     for rowIndex in range(0, length, boxRows):
         for colIndex in range(0, length, boxCols):
             for valueIndex in range(length):
@@ -64,9 +64,11 @@ def __check_box_constraint(hBase: int, matrix: List[List[bool]], length: int, bo
 
 def __initialize_matrix(length: int) -> List[List[bool]]:
     matrix = []
+    rowCount = length * length * length
+    colCount = 4 * length * length
 
-    for _ in range(length * length * length):
-        matrix.append([False] * (4 * length * length))
+    for _ in range(rowCount):
+        matrix.append([False] * colCount)
 
     return matrix
 
@@ -82,11 +84,17 @@ def __make_matrix(puzzle: RegularSudoku) -> List[List[bool]]:
 
     return matrix
 
-def __fill(values: List[Any], fillValue: Any) -> NoReturn:
+def __fill(values: List[Any], fillValue: Any):
     for index in range(len(values)):
         values[index] = fillValue
 
-def __place_initial_values(puzzle: RegularSudoku, matrix: List[List[bool]]) -> NoReturn:
+def __place_value(value: str, rowIndex: int, colIndex: int, length: int, matrix: List[List[bool]], legalValues: str):
+    for valueIndex in range(length):
+        if value != legalValues[valueIndex]:
+            index = __index(rowIndex, colIndex, valueIndex, length)
+            __fill(matrix[index], False)
+
+def __place_initial_values(puzzle: RegularSudoku, matrix: List[List[bool]]):
     length = puzzle.length
     legalValues = puzzle.legal
 
@@ -95,22 +103,15 @@ def __place_initial_values(puzzle: RegularSudoku, matrix: List[List[bool]]) -> N
             value = puzzle.get(rowIndex, colIndex)
 
             if value is not None:
-                for valueIndex in range(length):
-                    if value != legalValues[valueIndex]:
-                        index = __index(rowIndex, colIndex, valueIndex, length)
-                        __fill(matrix[index], False)
+                __place_value(value, rowIndex, colIndex, length, matrix, legalValues)
 
 def __make_doubly_linked_matrix(matrix: List[List[bool]]) -> _ExactCoverNode:
     mainHead = _ExactCoverNode()
     headers = []
     cols = len(matrix[0])
 
-    mainHead.column = mainHead
-
     for _ in range(cols):
         headNode = _ExactCoverNode()
-        headNode.column = headNode
-        headNode.size = 0
 
         headers.append(headNode)
 
@@ -125,10 +126,7 @@ def __make_doubly_linked_matrix(matrix: List[List[bool]]) -> _ExactCoverNode:
         for col in range(cols):
             if row[col]:
                 headNode = headers[col]
-                newNode = _ExactCoverNode()
-
-                newNode.column = headNode
-                newNode.size = 0
+                newNode = _ExactCoverNode(headNode)
 
                 if prev is None:
                     prev = newNode

@@ -1,27 +1,29 @@
 from dataclasses import dataclass
-from typing import NoReturn, Optional
+from typing import Optional
+from final_class import final
 from sudoku import StateError
 
+@final
 @dataclass
 class _Cell:
     """
     Cell of a Sudoku board. Contains a value that may or may not be edited.
     A cell shall only be non-editable if it was part of the initial set of
-    values of the Sudoku board
+    values of the Sudoku board. Shall only be used from within the sudoku package
     """
 
 
     __value: Optional[str] = None
     """
     The value contained in this cell. Can be None to indicate that no value has been entered.
-    Initially, set to None. Shall be treated as private
+    Initially, set to None. Shall only be accessed from within the _Cell class
     """
 
     __editable: bool = True
     """
     Indicates that this cell can have its value edited. Used to prevent a Sudoku board's
     initial values from being changed. Initially, set to True and shall only be converted
-    to False while generating Sudoku boards. Shall be treated as private
+    to False while generating Sudoku boards. Shall only be accessed from within the _Cell class
     """
 
     @property
@@ -29,7 +31,6 @@ class _Cell:
         """
         Returns the value contained in this cell. Can be None to indicate that no value
         has been entered
-
         :return: The value contained in this cell or None if there isn't one
         """
 
@@ -40,18 +41,16 @@ class _Cell:
         """
         Indicates whether this cell is editable. Used to prevent a Sudoku board's
         initial values from being changed
-
         :return: True if this cell is editable, False otherwise
         """
 
         return self.__editable
 
     @value.setter
-    def value(self, value: Optional[str]) -> NoReturn:
+    def value(self, value: Optional[str]):
         """
         Changes the value contained in this cell. Throws an exception
         if this cell is not editable
-
         :param value: the new value to place in this cell. Always None
             or a string consisting of one char
         :raises StateError: Caused if this cell is not editable
@@ -62,11 +61,17 @@ class _Cell:
 
         self.__value = value
 
-    def _make_noneditable(self) -> NoReturn:
+    @editable.setter
+    def editable(self, editable: bool):
         """
         Converts this cell to a non-editable state. Shall only be called
         on cells that initially have values after generating a Sudoku board.
-        Shall be treated as package-private
+        Shall only be called from within the sudoku package
+        :raises StateError: If the cell contains no value. Making a cell with no value non-editable will prevent the
+            board from being completed
         """
 
-        self.__editable = False
+        if self.__value is None:
+            raise StateError("Cannot make a cell with no value non-editable")
+
+        self.__editable = editable

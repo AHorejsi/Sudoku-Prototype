@@ -39,7 +39,7 @@ def generate_regular(info: RegularInfo) -> RegularSudoku:
     puzzle = RegularSudoku(info, table, safety)
 
     _initialize_values(puzzle, legalValues)
-    #_adjust_for_difficulty_regular(puzzle)
+    _adjust_for_difficulty_regular(puzzle)
     _shuffle_board_regular(puzzle)
 
     puzzle._finalize()

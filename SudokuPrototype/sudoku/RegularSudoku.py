@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from final_class import final
 from enum import Enum
 from typing import List, Optional, Iterable, Dict, Tuple
@@ -732,15 +733,13 @@ class RegularSudoku:
 
     def get_tentative(self, rowIndex: int, colIndex: int) -> Iterable[str]:
         """
-
-        :param rowIndex:
-        :param colIndex:
-        :return:
+        Returns the tentative set of values at the given row and column indices specified by the player
+        :param rowIndex: The row index of the tentative values
+        :param colIndex: The column index of the tentative values
+        :return: The tentative set of values at the given row and column indices specified by the player
         """
 
-        cell = self.__get_cell(rowIndex, colIndex)
-
-        return cell.tentative
+        return self.__get_cell(rowIndex, colIndex).tentative
 
     def set(self, rowIndex: int, colIndex: int, newValue: Optional[str]):
         """

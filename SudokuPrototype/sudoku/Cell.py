@@ -1,6 +1,6 @@
 from typing import Optional, Set
 from final_class import final
-from sudoku import StateError
+from sudoku.StateError import StateError
 
 @final
 class _Cell:

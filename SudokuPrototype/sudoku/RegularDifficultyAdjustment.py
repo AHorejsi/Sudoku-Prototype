@@ -48,8 +48,20 @@ def __do_adjustment(puzzle: RegularSudoku, amountOfGivens: int, lowerBoundOfGive
                 rowIndex2 = length - rowIndex1 - 1
                 colIndex2 = length - colIndex1 - 1
 
-                valueCount = __try_remove(puzzle, rowIndex1, colIndex1, valueCount)
-                valueCount = __try_remove(puzzle, rowIndex2, colIndex2, valueCount)
+                if 0 == randint(0, 2):
+                    valueCount = __try_remove(puzzle, rowIndex1, colIndex1, valueCount)
+
+                    if valueCount <= amountOfGivens:
+                        return
+
+                    valueCount = __try_remove(puzzle, rowIndex2, colIndex2, valueCount)
+                else:
+                    valueCount = __try_remove(puzzle, rowIndex2, colIndex2, valueCount)
+
+                    if valueCount <= amountOfGivens:
+                        return
+
+                    valueCount = __try_remove(puzzle, rowIndex1, colIndex1, valueCount)
 
                 if valueCount <= amountOfGivens:
                     return

@@ -1,10 +1,9 @@
 from typing import List
-from random import randint
 from sudoku.ValueInitialization import _initialize_values
 from sudoku.RegularDifficultyAdjustment import _adjust_for_difficulty_regular
 from sudoku.RegularShuffler import _shuffle_board_regular
 from sudoku.Cell import _Cell
-from sudoku.RegularSudoku import _RegularSafety, RegularInfo, RegularSudoku, RegularDimension, RegularDifficulty
+from sudoku.RegularSudoku import _RegularSafety, RegularInfo, RegularSudoku
 
 def __make_cells(length: int) -> List[_Cell]:
     """
@@ -40,7 +39,7 @@ def generate_regular(info: RegularInfo) -> RegularSudoku:
     puzzle = RegularSudoku(info, table, safety)
 
     _initialize_values(puzzle, legalValues)
-    #_adjust_for_difficulty_regular(puzzle)
+    _adjust_for_difficulty_regular(puzzle)
     _shuffle_board_regular(puzzle)
 
     puzzle._finalize()

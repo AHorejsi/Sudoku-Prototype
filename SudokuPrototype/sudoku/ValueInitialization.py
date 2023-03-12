@@ -54,7 +54,6 @@ def __initialize_values_helper2(
 
     legalValues = valueDict[(rowIndex, colIndex)]
 
-
     for value in legalValues:
         if puzzle.is_safe(rowIndex, colIndex, value):
             puzzle.set(rowIndex, colIndex, value)

@@ -1,9 +1,9 @@
 from __future__ import annotations
-from dataclasses import dataclass
 from final_class import final
 from enum import Enum
-from typing import List, Optional, Set, Dict, Tuple
+from typing import List, Optional, Iterable, Dict, Tuple
 from sudoku.Cell import _Cell
+from sudoku.StateError import StateError
 
 @final
 class RegularDimension(Enum):
@@ -18,6 +18,11 @@ class RegularDimension(Enum):
     'legal' specifies the valid characters for the board, in sorted order
     """
 
+    EIGHT: Dict[str, int | str] = { "length": 8, "boxRows": 4, "boxCols": 2, "legal": "01234567" }
+    """
+    Info for 8x8 boards. See docstring of 'RegularDimension for more details
+    """
+
     NINE: Dict[str, int | str] = { "length": 9, "boxRows": 3, "boxCols": 3, "legal": "123456789" }
     """
     Info for 9x9 boards. See docstring of 'RegularDimension for more details
@@ -28,9 +33,19 @@ class RegularDimension(Enum):
     Info for 10x10 boards. See docstring of 'RegularDimension for more details
     """
 
+    ELEVEN: Dict[str, int | str] = { "length": 11, "boxRows": 1, "boxCols": 11, "legal": "123456789AB" }
+    """
+    Info for 11x11 boards. See docstring of 'RegularDimension for more details
+    """
+
     TWELVE: Dict[str, int | str] = { "length": 12, "boxRows": 3, "boxCols": 4, "legal": "0123456789AB" }
     """
     Info for 12x12 boards. See docstring of 'RegularDimension for more details
+    """
+
+    THIRTEEN: Dict[str, int | str] = { "length": 13, "boxRows": 13, "boxCols": 1, "legal": "0123456789ABC" }
+    """
+    Info for 13x13 boards. See docstring of 'RegularDimension for more details
     """
 
     FIFTEEN: Dict[str, int | str] = { "length": 15, "boxRows": 5, "boxCols": 3, "legal": "123456789ABCDEF" }
@@ -40,12 +55,8 @@ class RegularDimension(Enum):
 
     SIXTEEN: Dict[str, int | str] = { "length": 16, "boxRows": 4, "boxCols": 4, "legal": "0123456789ABCDEF" }
     """
-    Info for 16x26 boards. See docstring of 'RegularDimension for more details
+    Info for 16x16 boards. See docstring of 'RegularDimension for more details
     """
-
-    EIGHTEEN: Dict[str, int | str] = { "length": 18, "boxRows": 3, "boxCols": 6, "legal": "0123456789ABCDEFGH" }
-
-    TWENTY: Dict[str, int | str] = { "length": 20, "boxRows": 4, "boxCols": 5, "legal": "0123456789ABCDEFGHIJ" }
 
 @final
 class RegularDifficulty(Enum):
@@ -104,13 +115,45 @@ class RegularInfo:
         difficultyDict = difficulty.value
 
         self.__length = dimensionsDict["length"]
+        """
+        The number of rows/columns/boxes in the sudoku board
+        """
+
         self.__boxRows = dimensionsDict["boxRows"]
+        """
+        The number of rows in each box of the sudoku board
+        """
+
         self.__boxCols = dimensionsDict["boxCols"]
+        """
+        The number of columns in each box of the sudoku board
+        """
+
         self.__legal = dimensionsDict["legal"]
+        """
+        The list of legal values for the sudoku board
+        """
+
         self.__difficulty = difficultyDict["title"]
+        """
+        The name of the difficulty level being used for the sudoku board
+        """
+
         self.__initialLowerBoundOfGivens = difficultyDict["initialLowerBoundOfGivens"]
+        """
+        The minimum percentage of initial values to supplied in the sudoku board
+        """
+
         self.__initialUpperBoundOfGivens = difficultyDict["initialUpperBoundOfGivens"]
+        """
+        The maximum percentage of initial values to supplied in the sudoku board
+        """
+
         self.__initialLowerBoundOfGivensPerUnit = difficultyDict["initialLowerBoundOfGivensPerUnit"]
+        """
+        The minimum percentage of initial values to be provided in all units.
+        A unit refers to a given cells row, column and box
+        """
 
     @property
     def length(self) -> int:
@@ -140,22 +183,22 @@ class RegularInfo:
         return self.__boxCols
 
     @property
-    def box_count_rowwise(self) -> int:
+    def row_box_count(self) -> int:
         """
         Returns the number of boxes from top to bottom
         :return: The number of boxes from top to bottom
         """
 
-        return self.length // self.box_cols
+        return self.length // self.box_rows
 
     @property
-    def box_count_colwise(self) -> int:
+    def col_box_count(self) -> int:
         """
         Returns the number of boxes from left to right
         :return: The number of boxes from left to right
         """
 
-        return self.length // self.box_rows
+        return self.length // self.box_cols
 
     @property
     def legal(self) -> str:
@@ -198,7 +241,7 @@ class RegularInfo:
     @property
     def initial_lower_bound_of_givens_per_unit(self) -> int:
         """
-        Returns  the minimum percentage of initial values to be provided in all units.
+        Returns the minimum percentage of initial values to be provided in all units.
         A unit refers to a given cells row, column and box
         :return: The minimum percentage of initial values to be provided in all units
         """
@@ -221,9 +264,24 @@ class _RegularSafety:
         bits = ~(~0 << length)
 
         self.__length = length
+        """
+        The number of rows/column/boxes in the sudoku board
+        """
+
         self.__rowSafety: List[int] = [bits] * length
+        """
+        The list of bit vectors describing which values are safe for each row
+        """
+
         self.__colSafety: List[int] = [bits] * length
+        """
+        The list of bit vectors describing which values are safe for each column
+        """
+
         self.__boxSafety: List[int] = [bits] * length
+        """
+        The list of bit vectors describing which values are safe for each box
+        """
 
     def safe(self, rowIndex: int, colIndex: int, boxIndex: int, valueIndex: int) -> bool:
         """
@@ -289,13 +347,14 @@ class _RegularSafety:
         :param colIndex: The column index whose hamming weight is to be computed
         :param boxIndex: The box index whose hamming weight is to be computed
         :return: A tuple containing the hamming weight for each index
+        :raises IndexError: If any of the supplied indices are outside the bounds of the safety table
         """
 
         self.__check_bounds([rowIndex, colIndex, boxIndex])
 
-        rowWeight = self.__hamming_weight(self.__rowSafety[rowIndex])
-        colWeight = self.__hamming_weight(self.__colSafety[colIndex])
-        boxWeight = self.__hamming_weight(self.__boxSafety[boxIndex])
+        rowWeight = _RegularSafety.__hamming_weight(self.__rowSafety[rowIndex])
+        colWeight = _RegularSafety.__hamming_weight(self.__colSafety[colIndex])
+        boxWeight = _RegularSafety.__hamming_weight(self.__boxSafety[boxIndex])
 
         return (rowWeight, colWeight, boxWeight)
 
@@ -312,7 +371,8 @@ class _RegularSafety:
             if index < 0 or index >= self.__length:
                 raise IndexError("Safety index out of bounds")
 
-    def __hamming_weight(self, val: int) -> int:
+    @staticmethod
+    def __hamming_weight(val: int) -> int:
         """
         Computes the hamming weight of the given int value. Shall only be called from within the RegularSafety class
         :param val: The value whose hamming weight is to be computed
@@ -328,29 +388,105 @@ class _RegularSafety:
 
         return val & 0x7f
 
+    def __row_state(self) -> str:
+        """
+        Makes a string representation of the row safety of each value. Shall only be called from within the
+        _RegularSafety class
+        :return: A string representation of the row safety of each value
+        """
+
+        return self.__state(self.__rowSafety, "Rows")
+
+    def __col_state(self) -> str:
+        """
+        Makes a string representation of the column safety of each value. Shall only be called from within the
+        _RegularSafety class
+        :return: A string representation of the column safety of each value
+        """
+
+        return self.__state(self.__colSafety, "Columns")
+
+    def __box_state(self) -> str:
+        """
+        Makes a string representation of the box safety of each value. Shall only be called from within the
+        _RegularSafety class
+        :return: A string representation of the box safety of each value
+        """
+
+        return self.__state(self.__boxSafety, "Boxes")
+
+    def __state(self, safety: List[int], name: str) -> str:
+        """
+        Makes a string representation of the given safety vector. Shall only be called from within the _RegularSafety
+        class
+        :param safety: The safety vector to be converted to a string
+        :param name: The name of the bit vector being used
+        :return: A string representation of the given safety vector
+        """
+
+        result = f"\t{name}:\n"
+
+        for (index, bits) in enumerate(safety, 1):
+            result += f"\t\t{index}: {format(bits, 'b').zfill(self.__length)}\n"
+
+        return result
+
+    def __str__(self):
+        """
+        Makes a string representation of the safety of each value in the table
+        :return: A string representation of the safety of each value in the table
+        """
+
+        rowState = self.__row_state()
+        colState = self.__col_state()
+        boxState = self.__box_state()
+
+        return f"Safety Table:\n{rowState}\n{colState}\n{boxState}"
+
+    def __repr__(self):
+        """
+        Returns the same result as __str__
+        :return: The same result as __str__
+        """
+
+        return str(self)
+
 @final
-@dataclass
 class RegularSudoku:
     """
     Represents a sudoku board that operates on the normal rules of sudoku. No additional rules, except
     the board is not restricted to being 9x9
     """
 
-    __info: RegularInfo
-    """
-    Various info describing the properties of this sudoku board. Also contains parameters used for generating
-    this sudoku board
-    """
+    def __init__(self, info: RegularInfo, table: List[_Cell], safety: _RegularSafety):
+        """
+        Makes a sudoku board with the specified initialization parameters. Shall only be called from within the
+        sudoku package
+        :param info: The info that will be used to limit how the board gets filled with values
+        :param table: The matrix of values that track where each value is
+        :param safety: A table of matrices specifying which parts of the board are safe for which values
+        """
 
-    __table: List[_Cell]
-    """
-    Cells that contain all of the values entered into the board and which tracks which values may be changed
-    """
+        self.__info: RegularInfo = info
+        """
+        Various info describing the properties of this sudoku board. Also contains parameters used for generating
+        this sudoku board
+        """
 
-    __safety: _RegularSafety
-    """
-    Describes which places on the board are safe for certain values
-    """
+        self.__table: List[_Cell] = table
+        """
+        Cells that contain all of the values entered into the board and which tracks which values may be changed
+        """
+
+        self.__safety: Optional[_RegularSafety] = safety
+        """
+        Describes which places on the board are safe for certain values
+        """
+
+        self.__finalized: bool = False
+        """
+        Indicates whether or not the sudoku board is ready for gameplay
+        """
 
     def __order(self, value: str) -> int:
         """
@@ -361,6 +497,9 @@ class RegularSudoku:
         :param value: The value whose sorted position is to be searched for or -1 if the supplied value is illegal
         :return: The index of the supplied value in a sorted array of legal values with no duplicates
         """
+
+        if not value.isalnum():
+            return -1
 
         legalValues = self.__info.legal
         lowIndex = 0
@@ -418,22 +557,22 @@ class RegularSudoku:
         return self.__info.box_cols
 
     @property
-    def box_count_rowwise(self) -> int:
+    def row_box_count(self) -> int:
         """
         Returns the number of boxes from top to bottom
         :return: The number of boxes from top to bottom
         """
 
-        return self.__info.box_count_rowwise
+        return self.__info.row_box_count
 
     @property
-    def box_count_colwise(self) -> int:
+    def col_box_count(self) -> int:
         """
         Returns the number of boxes from left to right
         :return: The number of boxes from left to right
         """
 
-        return self.__info.box_count_colwise
+        return self.__info.col_box_count
 
     @property
     def legal(self) -> str:
@@ -591,6 +730,18 @@ class RegularSudoku:
 
         return self.__get_cell(rowIndex, colIndex).value
 
+    def get_tentative(self, rowIndex: int, colIndex: int) -> Iterable[str]:
+        """
+
+        :param rowIndex:
+        :param colIndex:
+        :return:
+        """
+
+        cell = self.__get_cell(rowIndex, colIndex)
+
+        return cell.tentative
+
     def set(self, rowIndex: int, colIndex: int, newValue: Optional[str]):
         """
         Sets the value at the given row and column indices and erases the current value in the process.
@@ -598,7 +749,6 @@ class RegularSudoku:
         :param rowIndex: The row index of the value to be changed
         :param colIndex: The column index of the value to be changed
         :param newValue: The new value to place at the given row and column indices. Can be None
-        :raises ValueError: If the new value is not a legal value
         :raises IndexError: If the row and indices are outside the bounds of the board
         :raises StateError: If the cell at the given row and column indices is non-editable
         """
@@ -608,10 +758,11 @@ class RegularSudoku:
         oldValue = cell.value
         cell.value = newValue
 
-        if oldValue is not None:
-            self.__set_safe(rowIndex, colIndex, oldValue)
-        if newValue is not None:
-            self.__set_unsafe(rowIndex, colIndex, newValue)
+        if not self.__finalized:
+            if oldValue is not None:
+                self.__set_safe(rowIndex, colIndex, oldValue)
+            if newValue is not None:
+                self.__set_unsafe(rowIndex, colIndex, newValue)
 
     def delete(self, rowIndex: int, colIndex: int):
         """
@@ -663,9 +814,14 @@ class RegularSudoku:
         that require access to private fields/functions. Shall only be called from within the sudoku package
         """
 
+        if self.__finalized:
+            raise StateError("This sudoku board is ready for gameplay")
+
         for cell in self.__table:
             if cell.value is not None:
                 cell.editable = False
+
+        self.__finalized = True
 
     def is_complete(self) -> bool:
         """
@@ -740,9 +896,9 @@ class RegularSudoku:
         boxRows = self.box_rows
         boxCols = self.box_cols
 
-        result = f"{self.difficulty} {length}x{length}\n"
+        result = f"{self.difficulty} - {length}x{length}:\n"
 
-        border = ("-" * (length + self.box_count_rowwise + 1)) + "\n"
+        border = ("-" * (length + self.col_box_count + 1)) + "\n"
 
         for rowIndex in range(length):
             if 0 == rowIndex % boxRows:
@@ -759,6 +915,7 @@ class RegularSudoku:
             result += "|\n"
 
         result += border
+        result += str(self.__safety)
 
         return result
 

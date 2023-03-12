@@ -1,10 +1,8 @@
-from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Set
 from final_class import final
 from sudoku import StateError
 
 @final
-@dataclass
 class _Cell:
     """
     Cell of a Sudoku board. Contains a value that may or may not be edited.
@@ -12,19 +10,29 @@ class _Cell:
     values of the Sudoku board. Shall only be used from within the sudoku package
     """
 
+    def __init__(self):
+        """
+        Makes an editable cell with no value
+        """
 
-    __value: Optional[str] = None
-    """
-    The value contained in this cell. Can be None to indicate that no value has been entered.
-    Initially, set to None. Shall only be accessed from within the _Cell class
-    """
+        self.__value = None
+        """
+        The value contained in this cell. Can be None to indicate that no value has been entered.
+        Initially, set to None. Shall only be accessed from within the _Cell class
+        """
 
-    __editable: bool = True
-    """
-    Indicates that this cell can have its value edited. Used to prevent a Sudoku board's
-    initial values from being changed. Initially, set to True and shall only be converted
-    to False while generating Sudoku boards. Shall only be accessed from within the _Cell class
-    """
+        self.__editable = True
+        """
+        Indicates that this cell can have its value edited. Used to prevent a Sudoku board's
+        initial values from being changed. Initially, set to True and shall only be converted
+        to False while generating Sudoku boards. Shall only be accessed from within the _Cell class
+        """
+
+        self.__tentative: Set[str] = set()
+        """
+        List of tentative values that could be assigned to this cell. Specified by the player.
+        Shall only be accessed from within _Cell class
+        """
 
     @property
     def value(self) -> Optional[str]:
@@ -45,6 +53,15 @@ class _Cell:
         """
 
         return self.__editable
+
+    @property
+    def tentative(self) -> Set[str]:
+        """
+        Returns the set of tentative values specified by the player
+        :return: The set of tentative values specified by the player
+        """
+
+        return self.__tentative
 
     @value.setter
     def value(self, value: Optional[str]):

@@ -50,13 +50,84 @@ def __flip(puzzle: RegularSudoku):
     if 0 == randint(0, 2):
         __vertical_flip(puzzle)
 
+def __swap_row_boxes(puzzle: RegularSudoku, rowBoxIndex1: int, rowBoxIndex2: int):
+    """
+    Swaps the specified rows of boxes. Shall only be called from within RegularShuffler.py
+    :param puzzle: The puzzle to have rows of boxes swapped
+    :param rowBoxIndex1: The first index of the row of boxes to be swapped
+    :param rowBoxIndex2: The second index of the row of boxes to be swapped
+    """
+
+    length = puzzle.length
+    boxRows = puzzle.box_rows
+    rowIndex1 = rowBoxIndex1 * boxRows
+    rowIndex2 = rowBoxIndex2 * boxRows
+
+    for _ in range(boxRows):
+        for colIndex in range(length):
+            temp = puzzle.get(rowIndex1, colIndex)
+            puzzle.set(rowIndex1, colIndex, puzzle.get(rowIndex2, colIndex))
+            puzzle.set(rowIndex2, colIndex, temp)
+
+        rowIndex1 += 1
+        rowIndex2 += 1
+
 def __flip_box_by_row(puzzle: RegularSudoku):
-    pass
+    """
+    Swaps rows of boxes randomly. Shall only be called from within the RegularShuffler.py
+    :param puzzle: The sudoku board to rows of boxes swapped randomly
+    """
+
+    lastRowBoxIndex = puzzle.row_box_count - 1
+
+    for rowBoxIndex in range(lastRowBoxIndex):
+        randRowBoxIndex = randint(rowBoxIndex, lastRowBoxIndex)
+
+        if rowBoxIndex != randRowBoxIndex:
+            __swap_row_boxes(puzzle, rowBoxIndex, randRowBoxIndex)
+
+def __swap_col_boxes(puzzle: RegularSudoku, colBoxIndex1: int, colBoxIndex2: int):
+    """
+    Swaps the specified columns of boxes. Shall only be called from within RegularShuffler.py
+    :param puzzle: The puzzle to have columns of boxes swapped
+    :param colBoxIndex1: The first index of the column of boxes to be swapped
+    :param colBoxIndex2: The second index of the column of boxes to be swapped
+    """
+
+    length = puzzle.length
+    boxCols = puzzle.box_cols
+    colIndex1 = colBoxIndex1 * boxCols
+    colIndex2 = colBoxIndex2 * boxCols
+
+    for _ in range(boxCols):
+        for rowIndex in range(length):
+            temp = puzzle.get(rowIndex, colIndex1)
+            puzzle.set(rowIndex, colIndex1, puzzle.get(rowIndex, colIndex2))
+            puzzle.set(rowIndex, colIndex2, temp)
+
+        colIndex1 += 1
+        colIndex2 += 1
 
 def __flip_box_by_col(puzzle: RegularSudoku):
-    pass
+    """
+    Swaps columns of boxes randomly. Shall only be called from within the RegularShuffler.py
+    :param puzzle: The sudoku board to columns of boxes swapped randomly
+    """
+
+    lastColBoxIndex = puzzle.col_box_count - 1
+
+    for colBoxIndex in range(lastColBoxIndex):
+        randColBoxIndex = randint(colBoxIndex, lastColBoxIndex)
+
+        if colBoxIndex != randColBoxIndex:
+            __swap_col_boxes(puzzle, colBoxIndex, randColBoxIndex)
 
 def __flip_box(puzzle: RegularSudoku):
+    """
+    Swaps rows/columns of boxes randomly. Shall only be called from within RegularShuffler.py
+    :param puzzle: The sudoku board to have rows/columns of boxes swapped randomly
+    """
+
     __flip_box_by_row(puzzle)
     __flip_box_by_col(puzzle)
 
@@ -261,8 +332,9 @@ def _shuffle_board_regular(puzzle: RegularSudoku):
     :param puzzle: The sudoku board to shuffle
     """
 
-    methods = [__inner, __flip_box, __flip, __rotate]
-    shuffle(methods)
+    for _ in range(5):
+        for shuffler in [__inner, __flip_box]:
+            shuffler(puzzle)
 
-    for shuffler in methods:
+    for shuffler in [__flip, __rotate]:
         shuffler(puzzle)

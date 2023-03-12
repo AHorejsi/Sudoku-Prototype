@@ -8,8 +8,9 @@ def __regular():
             new = generate_regular(info)
 
             print(new)
-            print(f"Solved: {new.is_solved()}")
             print(f"Valid: {new.is_valid()}")
+            print(f"Complete: {new.is_complete()}")
+            print(f"Solved: {new.is_solved()}")
             print("\n")
 
 def __hyper():
